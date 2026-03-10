@@ -43,20 +43,49 @@ const WEBVIEW_HTML = `
       return A4 * Math.pow(2, (n - a4Index) / 12);
     }
 
-    function playFrequency(freq, duration) {
-      duration = duration || 0.8;
+    var sharedAudioCtx = null;
+    function getAudioCtx() {
+      if (!sharedAudioCtx || sharedAudioCtx.state === 'closed') {
+        sharedAudioCtx = new AudioContext();
+      }
+      return sharedAudioCtx;
+    }
+
+    function playFrequency(freq) {
       try {
-        var audioCtx = new AudioContext();
-        var oscillator = audioCtx.createOscillator();
-        var gainNode = audioCtx.createGain();
-        oscillator.type = 'sine';
-        oscillator.frequency.value = freq;
-        oscillator.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-        oscillator.start();
-        gainNode.gain.setValueAtTime(1, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-        oscillator.stop(audioCtx.currentTime + duration);
+        var audioCtx = getAudioCtx();
+        var now = audioCtx.currentTime;
+        var duration = 2.5;
+
+        // Piano harmonics: [frequency multiplier, relative volume]
+        var harmonics = [
+          [1,    0.7],
+          [2,    0.15],
+          [3,    0.08],
+          [4,    0.04],
+          [5,    0.02],
+          [6,    0.01],
+        ];
+
+        var masterGain = audioCtx.createGain();
+        masterGain.connect(audioCtx.destination);
+        // Piano envelope: instant attack, fast initial drop, long decay
+        masterGain.gain.setValueAtTime(0, now);
+        masterGain.gain.linearRampToValueAtTime(1, now + 0.005);
+        masterGain.gain.exponentialRampToValueAtTime(0.3, now + 0.1);
+        masterGain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+        harmonics.forEach(function(h) {
+          var osc = audioCtx.createOscillator();
+          var gainNode = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = freq * h[0];
+          gainNode.gain.value = h[1];
+          osc.connect(gainNode);
+          gainNode.connect(masterGain);
+          osc.start(now);
+          osc.stop(now + duration);
+        });
       } catch (e) {
         // Audio not available, silently skip
       }
