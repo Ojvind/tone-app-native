@@ -74,6 +74,20 @@ describe('useGame', () => {
     expect(result.current.state.gameOver).toBe(true);
   });
 
+  it('checkAnswers accepts sharp notes like C#', () => {
+    const { result } = renderHook(() => useGame(5));
+    act(() => result.current.actions.startGame());
+
+    // Force a sharp note into guesses matching whatever note is at index 0
+    const noteName = result.current.state.notes[0].name;
+    const guesses = Array(8).fill('Z');
+    guesses[0] = noteName;
+    act(() => result.current.actions.setGuesses(guesses));
+    act(() => result.current.actions.checkAnswers());
+
+    expect(result.current.state.results[0]).toBe(true);
+  });
+
   it('resetGame restores initial state', () => {
     const { result } = renderHook(() => useGame(5));
     act(() => result.current.actions.startGame());

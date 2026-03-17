@@ -117,7 +117,11 @@ const WEBVIEW_HTML = `
           stave.addClef(clef).setContext(context).draw();
 
           var staveNotes = clefNotes.map(function(note) {
-            return new VF.StaveNote({ clef: clef, keys: [note.key], duration: 'q' });
+            var sn = new VF.StaveNote({ clef: clef, keys: [note.key], duration: 'q' });
+            if (note.key.includes('#')) {
+              sn.addModifier(new VF.Accidental('#'), 0);
+            }
+            return sn;
           });
 
           VF.Formatter.FormatAndDraw(context, stave, staveNotes);
