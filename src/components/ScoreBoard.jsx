@@ -5,15 +5,15 @@ export default function ScoreBoard({ round, totalRounds, score, checked }) {
   return (
     <View style={styles.container}>
       <Text style={styles.text}>
-        <Text style={styles.label}>Round: </Text>
+        <Text style={styles.label}>Runda: </Text>
         {round + 1} / {totalRounds}
       </Text>
       <Text style={styles.text}>
-        <Text style={styles.label}>Score: </Text>
+        <Text style={styles.label}>Poäng: </Text>
         {score}
       </Text>
       {checked && (
-        <Text style={styles.hint}>Press "Next" to continue.</Text>
+        <Text style={styles.hint}>Tryck "Nästa" för att fortsätta.</Text>
       )}
     </View>
   );

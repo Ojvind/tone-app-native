@@ -4,7 +4,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 export default function Settings({ totalRounds, setTotalRounds, onStart }) {
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Number of rounds</Text>
+      <Text style={styles.label}>Antal rundor</Text>
       <View style={styles.row}>
         <Pressable
           style={styles.stepButton}
@@ -21,7 +21,7 @@ export default function Settings({ totalRounds, setTotalRounds, onStart }) {
         </Pressable>
       </View>
       <Pressable style={styles.startButton} onPress={onStart}>
-        <Text style={styles.startButtonText}>Start practice</Text>
+        <Text style={styles.startButtonText}>Starta övning</Text>
       </Pressable>
     </View>
   );

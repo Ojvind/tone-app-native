@@ -30,7 +30,7 @@ export default function App() {
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled"
         >
-          <Text style={styles.title}>Guess the Notes</Text>
+          <Text style={styles.title}>Gissa noter</Text>
 
           {!state.gameStarted && (
             <Settings
@@ -59,10 +59,10 @@ export default function App() {
               <Pressable style={styles.button} onPress={actions.handleNext}>
                 <Text style={styles.buttonText}>
                   {!state.checked
-                    ? 'Check answers'
+                    ? 'Kontrollera svar'
                     : state.round + 1 < state.totalRounds
-                    ? 'Next'
-                    : 'Show results'}
+                    ? 'Nästa'
+                    : 'Visa resultat'}
                 </Text>
               </Pressable>
             </View>

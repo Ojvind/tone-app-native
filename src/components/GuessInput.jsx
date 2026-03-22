@@ -40,8 +40,8 @@ export default function GuessInput({ guesses, setGuesses, checked, results, note
 
   return (
     <View style={styles.container}>
-      {renderGroup('Treble clef', [0, 1, 2, 3])}
-      {renderGroup('Bass clef', [4, 5, 6, 7])}
+      {renderGroup('G-nyckel', [0, 1, 2, 3])}
+      {renderGroup('F-nyckel', [4, 5, 6, 7])}
     </View>
   );
 }
