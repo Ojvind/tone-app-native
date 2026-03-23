@@ -12,7 +12,7 @@ export default function ScoreBoard({ round, totalRounds, score, checked }) {
         <Text style={styles.label}>Poäng: </Text>
         {score}
       </Text>
-      {checked && (
+      {checked && round + 1 < totalRounds && (
         <Text style={styles.hint}>Tryck "Nästa" för att fortsätta.</Text>
       )}
     </View>

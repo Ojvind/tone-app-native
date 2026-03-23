@@ -2,7 +2,7 @@
   "expo": {
     "name": "Gissa noter",
     "slug": "tone-app-native",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -13,7 +13,10 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "se.otterbjork.ojvind.gissanoter"
+      "bundleIdentifier": "se.otterbjork.ojvind.gissanoter",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
