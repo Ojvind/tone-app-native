@@ -32,7 +32,8 @@ export function useGame(initialRounds = 5) {
   const checkAnswers = () => {
     const checkedResults = notes.map((note, i) => {
       const guess = guesses[i].trim().toUpperCase();
-      return guess === note.name.toUpperCase();
+      const accepted = [note.name.toUpperCase(), ...(note.alternatives ?? [])];
+      return accepted.includes(guess);
     });
     const roundScore = checkedResults.filter(Boolean).length;
     setScore(prev => prev + roundScore);
