@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TextInput, StyleSheet } from 'react-native';
+import { useTheme } from '../theme';
 
 function formatNoteName(name) {
   if (name.endsWith('#')) return name.slice(0, -1) + '♯';
@@ -8,6 +9,8 @@ function formatNoteName(name) {
 }
 
 export default function GuessInput({ guesses, setGuesses, checked, results, notes }) {
+  const colors = useTheme();
+
   const handleChange = (index, value) => {
     const updated = [...guesses];
     updated[index] = value;
@@ -16,25 +19,29 @@ export default function GuessInput({ guesses, setGuesses, checked, results, note
 
   const renderGroup = (label, indices) => (
     <View style={styles.group}>
-      <Text style={styles.groupLabel}>{label}</Text>
+      <Text style={[styles.groupLabel, { color: colors.textMuted }]}>{label}</Text>
       <View style={styles.row}>
         {indices.map(i => (
           <View key={i} style={styles.cell}>
             <TextInput
               style={[
                 styles.input,
-                checked && (results[i] ? styles.inputCorrect : styles.inputWrong),
+                { borderColor: colors.border, backgroundColor: colors.inputBg, color: colors.text },
+                checked && (results[i]
+                  ? { borderColor: colors.correct, backgroundColor: colors.correctBg }
+                  : { borderColor: colors.wrong, backgroundColor: colors.wrongBg }
+                ),
               ]}
               value={guesses[i] ?? ''}
               onChangeText={value => handleChange(i, value)}
               editable={!checked}
               placeholder="e.g. C"
-              placeholderTextColor="#aaa"
+              placeholderTextColor={colors.placeholder}
               autoCapitalize="characters"
               autoCorrect={false}
             />
             {checked && (
-              <Text style={[styles.result, results[i] ? styles.correct : styles.wrong]}>
+              <Text style={[styles.result, { color: results[i] ? colors.correct : colors.wrong }]}>
                 {results[i] ? '✓' : `✗ ${formatNoteName(notes[i].name)}`}
               </Text>
             )}
@@ -63,13 +70,13 @@ const styles = StyleSheet.create({
   groupLabel: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#9e7f5e',
     letterSpacing: 1.2,
     textTransform: 'uppercase',
   },
   row: {
     flexDirection: 'row',
     gap: 8,
+    justifyContent: 'center',
   },
   cell: {
     alignItems: 'center',
@@ -78,31 +85,14 @@ const styles = StyleSheet.create({
   input: {
     width: 72,
     borderWidth: 1.5,
-    borderColor: '#c8a87a',
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 8,
     fontSize: 15,
     textAlign: 'center',
-    backgroundColor: '#fffdf5',
-    color: '#2c1a0e',
-  },
-  inputCorrect: {
-    borderColor: '#3d6e4e',
-    backgroundColor: '#f0f7f2',
-  },
-  inputWrong: {
-    borderColor: '#8b3a3a',
-    backgroundColor: '#fdf2f2',
   },
   result: {
     fontSize: 12,
     fontWeight: '600',
-  },
-  correct: {
-    color: '#3d6e4e',
-  },
-  wrong: {
-    color: '#8b3a3a',
   },
 });

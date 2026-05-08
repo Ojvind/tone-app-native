@@ -1,19 +1,22 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useTheme } from '../theme';
 
 export default function ScoreBoard({ round, totalRounds, score, checked }) {
+  const colors = useTheme();
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.text}>
-        <Text style={styles.label}>Runda: </Text>
+    <View style={[styles.container, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <Text style={[styles.text, { color: colors.textSecondary }]}>
+        <Text style={[styles.label, { color: colors.text }]}>Runda: </Text>
         {round + 1} / {totalRounds}
       </Text>
-      <Text style={styles.text}>
-        <Text style={styles.label}>Poäng: </Text>
+      <Text style={[styles.text, { color: colors.textSecondary }]}>
+        <Text style={[styles.label, { color: colors.text }]}>Poäng: </Text>
         {score}
       </Text>
       {checked && round + 1 < totalRounds && (
-        <Text style={styles.hint}>Tryck Nästa →</Text>
+        <Text style={[styles.hint, { color: colors.textMuted }]}>Tryck Nästa →</Text>
       )}
     </View>
   );
@@ -27,22 +30,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
     paddingHorizontal: 12,
-    backgroundColor: '#fff8ee',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#d4b896',
   },
   text: {
     fontSize: 14,
-    color: '#6b4c30',
   },
   label: {
     fontWeight: '700',
-    color: '#2c1a0e',
   },
   hint: {
     fontSize: 12,
-    color: '#9e7f5e',
     fontStyle: 'italic',
   },
 });

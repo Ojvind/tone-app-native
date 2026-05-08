@@ -1,10 +1,11 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { View, Pressable, Text, StyleSheet, Animated } from 'react-native';
 import { WebView } from 'react-native-webview';
+import { useTheme } from '../theme';
 
 // All note rendering and audio lives in here so we can use VexFlow (DOM-based)
 // and Web Audio API, both of which require a browser environment.
-const WEBVIEW_HTML = `
+const getWebViewHTML = (bgColor, noteColor) => `
 <!DOCTYPE html>
 <html>
 <head>
@@ -12,7 +13,7 @@ const WEBVIEW_HTML = `
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #fff8ee; display: flex; justify-content: center; padding: 8px 0; }
+    body { background: ${bgColor}; display: flex; justify-content: center; padding: 8px 0; }
     #container svg { max-width: 100%; height: auto; }
     #error { color: red; font-family: sans-serif; font-size: 12px; padding: 8px; }
   </style>
@@ -132,6 +133,19 @@ const WEBVIEW_HTML = `
           VF.Formatter.FormatAndDraw(context, stave, staveNotes);
           y += 110;
         });
+
+        var svg = container.querySelector('svg');
+        if (svg) {
+          var ns = 'http://www.w3.org/2000/svg';
+          var defs = document.createElementNS(ns, 'defs');
+          defs.innerHTML = '<filter id="nc"><feFlood flood-color="${noteColor}" result="c"/><feComposite in="c" in2="SourceAlpha" operator="in"/></filter>';
+          svg.insertBefore(defs, svg.firstChild);
+          var g = document.createElementNS(ns, 'g');
+          g.setAttribute('filter', 'url(#nc)');
+          var children = Array.prototype.slice.call(svg.childNodes, 1);
+          children.forEach(function(child) { g.appendChild(child); });
+          svg.appendChild(g);
+        }
       } catch (e) {
         document.getElementById('error').textContent = 'Render error: ' + e.message;
       }
@@ -164,6 +178,7 @@ const WEBVIEW_HTML = `
 `;
 
 export default function NoteDisplay({ notes }) {
+  const colors = useTheme();
   const webViewRef = useRef(null);
   const [loaded, setLoaded] = useState(false);
   const pendingRef = useRef(null);
@@ -199,11 +214,11 @@ export default function NoteDisplay({ notes }) {
 
   return (
     <View>
-      <View style={styles.container}>
+      <View style={[styles.container, { borderColor: colors.border }]}>
         <WebView
           ref={webViewRef}
-          source={{ html: WEBVIEW_HTML }}
-          style={styles.webView}
+          source={{ html: getWebViewHTML(colors.webViewBg, colors.noteColor) }}
+          style={[styles.webView, { backgroundColor: colors.webViewBg }]}
           onLoadEnd={handleLoadEnd}
           scrollEnabled={false}
           originWhitelist={['*']}
@@ -212,8 +227,11 @@ export default function NoteDisplay({ notes }) {
         />
       </View>
       <Pressable onPress={handleReplay}>
-        <Animated.View style={[styles.replayButton, { transform: [{ scale: scaleAnim }] }]}>
-          <Text style={styles.replayText}>♪ Spela igen</Text>
+        <Animated.View style={[
+          styles.replayButton,
+          { borderColor: colors.border, backgroundColor: colors.card, transform: [{ scale: scaleAnim }] },
+        ]}>
+          <Text style={[styles.replayText, { color: colors.textSecondary }]}>♪ Spela igen</Text>
         </Animated.View>
       </Pressable>
     </View>
@@ -231,7 +249,6 @@ const styles = StyleSheet.create({
   },
   webView: {
     flex: 1,
-    backgroundColor: '#fff8ee',
   },
   replayButton: {
     alignSelf: 'center',
@@ -240,12 +257,9 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     borderRadius: 20,
     borderWidth: 1.5,
-    borderColor: '#c8a87a',
-    backgroundColor: '#fff8ee',
   },
   replayText: {
     fontSize: 13,
-    color: '#6b4c30',
     fontWeight: '600',
     letterSpacing: 0.3,
   },

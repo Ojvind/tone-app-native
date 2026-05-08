@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useGame } from './src/hooks/useGame';
+import { useTheme } from './src/theme';
 import Settings from './src/components/Settings';
 import NoteDisplay from './src/components/NoteDisplay';
 import GuessInput from './src/components/GuessInput';
@@ -19,9 +20,10 @@ import GameOver from './src/components/GameOver';
 
 export default function App() {
   const { state, actions } = useGame();
+  const colors = useTheme();
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -30,8 +32,8 @@ export default function App() {
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled"
         >
-          <Text style={styles.title}>Gissa noter</Text>
-          <View style={styles.divider} />
+          <Text style={[styles.title, { color: colors.text }]}>Gissa noter</Text>
+          <View style={[styles.divider, { backgroundColor: colors.divider }]} />
 
           {!state.gameStarted && (
             <Settings
@@ -57,8 +59,11 @@ export default function App() {
                 results={state.results}
                 notes={state.notes}
               />
-              <Pressable style={styles.button} onPress={actions.handleNext}>
-                <Text style={styles.buttonText}>
+              <Pressable
+                style={[styles.button, { backgroundColor: colors.buttonBg }]}
+                onPress={actions.handleNext}
+              >
+                <Text style={[styles.buttonText, { color: colors.buttonText }]}>
                   {!state.checked
                     ? 'Kontrollera svar'
                     : state.round + 1 < state.totalRounds
@@ -86,7 +91,6 @@ export default function App() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: '#faf6ed',
   },
   flex: {
     flex: 1,
@@ -98,28 +102,24 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 30,
     fontWeight: 'bold',
-    color: '#2c1a0e',
     marginBottom: 4,
     textAlign: 'center',
     letterSpacing: 1,
   },
   divider: {
     height: 1,
-    backgroundColor: '#d4b896',
     marginBottom: 20,
   },
   game: {
     gap: 16,
   },
   button: {
-    backgroundColor: '#5c3a1e',
     paddingVertical: 14,
     borderRadius: 10,
     alignItems: 'center',
     marginTop: 8,
   },
   buttonText: {
-    color: '#faf6ed',
     fontSize: 16,
     fontWeight: '600',
     letterSpacing: 0.5,
