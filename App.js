@@ -38,7 +38,7 @@ export default function App() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
-      <ClefDecorations color={colors.text} />
+      {!state.gameStarted && <ClefDecorations color={colors.text} />}
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
