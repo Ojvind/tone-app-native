@@ -1,6 +1,27 @@
 import { useState } from 'react';
 import { TREBLE_NOTES, BASS_NOTES } from '../constants';
 
+const SHARP_TO_FLAT = {
+  'C#': { name: 'Db', keyPrefix: 'db' },
+  'D#': { name: 'Eb', keyPrefix: 'eb' },
+  'F#': { name: 'Gb', keyPrefix: 'gb' },
+  'G#': { name: 'Ab', keyPrefix: 'ab' },
+  'A#': { name: 'Bb', keyPrefix: 'bb' },
+};
+
+function maybeConvertToFlat(note) {
+  const flat = SHARP_TO_FLAT[note.name];
+  if (!flat || Math.random() < 0.5) return note;
+  const octave = note.key.split('/')[1];
+  const otherAlts = (note.alternatives ?? []).filter(a => a !== flat.name.toUpperCase());
+  return {
+    ...note,
+    name: flat.name,
+    key: `${flat.keyPrefix}/${octave}`,
+    alternatives: [note.name, ...otherAlts],
+  };
+}
+
 export function useGame(initialRounds = 5) {
   const [notes, setNotes] = useState([]);
   const [guesses, setGuesses] = useState([]);
@@ -14,11 +35,11 @@ export function useGame(initialRounds = 5) {
 
   const generateNotes = () => {
     const trebleNotes = Array.from({ length: 4 }, () =>
-      TREBLE_NOTES[Math.floor(Math.random() * TREBLE_NOTES.length)]
+      maybeConvertToFlat(TREBLE_NOTES[Math.floor(Math.random() * TREBLE_NOTES.length)])
     ).map(note => ({ ...note, clef: 'treble' }));
 
     const bassNotes = Array.from({ length: 4 }, () =>
-      BASS_NOTES[Math.floor(Math.random() * BASS_NOTES.length)]
+      maybeConvertToFlat(BASS_NOTES[Math.floor(Math.random() * BASS_NOTES.length)])
     ).map(note => ({ ...note, clef: 'bass' }));
 
     const allNotes = [...trebleNotes, ...bassNotes];

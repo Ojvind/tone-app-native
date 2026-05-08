@@ -1,6 +1,12 @@
 import React from 'react';
 import { View, Text, TextInput, StyleSheet } from 'react-native';
 
+function formatNoteName(name) {
+  if (name.endsWith('#')) return name.slice(0, -1) + '♯';
+  if (name.length === 2 && name.endsWith('b')) return name[0] + '♭';
+  return name;
+}
+
 export default function GuessInput({ guesses, setGuesses, checked, results, notes }) {
   const handleChange = (index, value) => {
     const updated = [...guesses];
@@ -29,7 +35,7 @@ export default function GuessInput({ guesses, setGuesses, checked, results, note
             />
             {checked && (
               <Text style={[styles.result, results[i] ? styles.correct : styles.wrong]}>
-                {results[i] ? '✓' : `✗ ${notes[i].name}`}
+                {results[i] ? '✓' : `✗ ${formatNoteName(notes[i].name)}`}
               </Text>
             )}
           </View>

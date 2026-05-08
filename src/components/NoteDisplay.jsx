@@ -29,13 +29,15 @@ const WEBVIEW_HTML = `
       return null;
     }
 
-    // Parse note key like 'c/4', 'a#/3' into frequency
+    // Parse note key like 'c/4', 'a#/3', 'db/4' into frequency
     function noteToFrequency(key) {
       var A4 = 440;
       var noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-      var normalized = key.replace('/', '').toUpperCase(); // 'c/4' -> 'C4'
-      var octave = parseInt(normalized[normalized.length - 1], 10);
-      var pitch = normalized.slice(0, normalized.length - 1);
+      var flatToSharp = { 'DB': 'C#', 'EB': 'D#', 'GB': 'F#', 'AB': 'G#', 'BB': 'A#' };
+      var parts = key.split('/');
+      var pitch = parts[0].toUpperCase();
+      var octave = parseInt(parts[1], 10);
+      if (flatToSharp[pitch]) pitch = flatToSharp[pitch];
       var keyNumber = noteNames.indexOf(pitch);
       if (keyNumber < 0) return null;
       var n = keyNumber + (octave * 12);
@@ -118,8 +120,11 @@ const WEBVIEW_HTML = `
 
           var staveNotes = clefNotes.map(function(note) {
             var sn = new VF.StaveNote({ clef: clef, keys: [note.key], duration: 'q' });
-            if (note.key.includes('#')) {
+            var pitchPart = note.key.split('/')[0];
+            if (pitchPart.endsWith('#')) {
               sn.addModifier(new VF.Accidental('#'), 0);
+            } else if (pitchPart.length > 1 && pitchPart.endsWith('b')) {
+              sn.addModifier(new VF.Accidental('b'), 0);
             }
             return sn;
           });
