@@ -8,6 +8,7 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  Dimensions,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useGame } from './src/hooks/useGame';
@@ -18,12 +19,26 @@ import GuessInput from './src/components/GuessInput';
 import ScoreBoard from './src/components/ScoreBoard';
 import GameOver from './src/components/GameOver';
 
+function ClefDecorations({ color }) {
+  return (
+    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+      <Text style={{ position: 'absolute', top: '48%', right: 40, fontSize: 260, lineHeight: 280, color, opacity: 0.06, transform: [{ rotate: '-12deg' }] }}>{'𝄞'}</Text>
+      <Text style={{ position: 'absolute', top: '43%', left: 55, fontSize: 60, color, opacity: 0.08, transform: [{ rotate: '-8deg' }] }}>{'♩'}</Text>
+      <Text style={{ position: 'absolute', top: '48%', left: 115, fontSize: 48, color, opacity: 0.07, transform: [{ rotate: '6deg' }] }}>{'♫'}</Text>
+      <Text style={{ position: 'absolute', top: '54%', left: 72, fontSize: 40, color, opacity: 0.07, transform: [{ rotate: '-14deg' }] }}>{'♪'}</Text>
+      <Text style={{ position: 'absolute', top: '47%', left: 160, fontSize: 52, color, opacity: 0.06, transform: [{ rotate: '10deg' }] }}>{'♬'}</Text>
+      <Text style={{ position: 'absolute', bottom: '5%', left: 30, fontSize: 160, lineHeight: 180, color, opacity: 0.06, transform: [{ rotate: '10deg' }] }}>{'𝄢'}</Text>
+    </View>
+  );
+}
+
 export default function App() {
   const { state, actions } = useGame();
   const colors = useTheme();
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
+      <ClefDecorations color={colors.text} />
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
