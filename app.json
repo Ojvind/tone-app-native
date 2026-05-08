@@ -25,6 +25,7 @@
       },
       "package": "se.otterbjork.ojvind.gissanoter"
     },
+    "newArchEnabled": true,
     "plugins": [
       "expo-asset"
     ],
