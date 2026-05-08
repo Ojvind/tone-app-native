@@ -31,6 +31,7 @@ export default function App() {
           keyboardShouldPersistTaps="handled"
         >
           <Text style={styles.title}>Gissa noter</Text>
+          <View style={styles.divider} />
 
           {!state.gameStarted && (
             <Settings
@@ -85,35 +86,42 @@ export default function App() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: '#f8f8f8',
+    backgroundColor: '#faf6ed',
   },
   flex: {
     flex: 1,
   },
   scroll: {
     padding: 20,
-    paddingTop: 12,
+    paddingTop: 16,
   },
   title: {
-    fontSize: 28,
+    fontSize: 30,
     fontWeight: 'bold',
-    color: '#222',
-    marginBottom: 20,
+    color: '#2c1a0e',
+    marginBottom: 4,
     textAlign: 'center',
+    letterSpacing: 1,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#d4b896',
+    marginBottom: 20,
   },
   game: {
     gap: 16,
   },
   button: {
-    backgroundColor: '#4a90e2',
+    backgroundColor: '#5c3a1e',
     paddingVertical: 14,
-    borderRadius: 8,
+    borderRadius: 10,
     alignItems: 'center',
     marginTop: 8,
   },
   buttonText: {
-    color: '#fff',
+    color: '#faf6ed',
     fontSize: 16,
     fontWeight: '600',
+    letterSpacing: 0.5,
   },
 });

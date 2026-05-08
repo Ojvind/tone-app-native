@@ -13,7 +13,7 @@ export default function ScoreBoard({ round, totalRounds, score, checked }) {
         {score}
       </Text>
       {checked && round + 1 < totalRounds && (
-        <Text style={styles.hint}>Tryck "Nästa" för att fortsätta.</Text>
+        <Text style={styles.hint}>Tryck Nästa →</Text>
       )}
     </View>
   );
@@ -22,20 +22,27 @@ export default function ScoreBoard({ round, totalRounds, score, checked }) {
 const styles = StyleSheet.create({
   container: {
     width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingVertical: 8,
-    gap: 4,
+    paddingHorizontal: 12,
+    backgroundColor: '#fff8ee',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#d4b896',
   },
   text: {
-    fontSize: 15,
-    color: '#333',
+    fontSize: 14,
+    color: '#6b4c30',
   },
   label: {
-    fontWeight: 'bold',
+    fontWeight: '700',
+    color: '#2c1a0e',
   },
   hint: {
-    fontSize: 13,
-    color: '#888',
+    fontSize: 12,
+    color: '#9e7f5e',
     fontStyle: 'italic',
-    marginTop: 4,
   },
 });

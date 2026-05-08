@@ -1,5 +1,5 @@
-import React, { useRef, useEffect, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
+import { View, Pressable, Text, StyleSheet, Animated } from 'react-native';
 import { WebView } from 'react-native-webview';
 
 // All note rendering and audio lives in here so we can use VexFlow (DOM-based)
@@ -12,7 +12,7 @@ const WEBVIEW_HTML = `
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #fff; display: flex; justify-content: center; padding: 8px 0; }
+    body { background: #fff8ee; display: flex; justify-content: center; padding: 8px 0; }
     #container svg { max-width: 100%; height: auto; }
     #error { color: red; font-family: sans-serif; font-size: 12px; padding: 8px; }
   </style>
@@ -137,15 +137,21 @@ const WEBVIEW_HTML = `
       }
     }
 
+    function playNotes(notes) {
+      notes.forEach(function(note, index) {
+        var freq = noteToFrequency(note.key);
+        if (freq) {
+          setTimeout(function() { playFrequency(freq); }, index * 900);
+        }
+      });
+    }
+
     function handleMessage(data) {
       if (data.type === 'RENDER_NOTES') {
         renderNotes(data.notes);
-        data.notes.forEach(function(note, index) {
-          var freq = noteToFrequency(note.key);
-          if (freq) {
-            setTimeout(function() { playFrequency(freq); }, index * 900);
-          }
-        });
+        playNotes(data.notes);
+      } else if (data.type === 'PLAY_NOTES') {
+        playNotes(data.notes);
       }
     }
 
@@ -161,6 +167,7 @@ export default function NoteDisplay({ notes }) {
   const webViewRef = useRef(null);
   const [loaded, setLoaded] = useState(false);
   const pendingRef = useRef(null);
+  const scaleAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     if (notes.length === 0) return;
@@ -180,19 +187,35 @@ export default function NoteDisplay({ notes }) {
     }
   };
 
+  const handleReplay = useCallback(() => {
+    if (loaded && webViewRef.current && notes.length > 0) {
+      webViewRef.current.postMessage(JSON.stringify({ type: 'PLAY_NOTES', notes }));
+    }
+    Animated.sequence([
+      Animated.spring(scaleAnim, { toValue: 0.88, useNativeDriver: true, speed: 50 }),
+      Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true, speed: 14, bounciness: 14 }),
+    ]).start();
+  }, [loaded, notes, scaleAnim]);
+
   return (
-    <View style={styles.container}>
-      <WebView
-        ref={webViewRef}
-        source={{ html: WEBVIEW_HTML }}
-        style={styles.webView}
-        onLoadEnd={handleLoadEnd}
-        scrollEnabled={false}
-        originWhitelist={['*']}
-        // Allow audio autoplay on iOS
-        mediaPlaybackRequiresUserAction={false}
-        allowsInlineMediaPlayback={true}
-      />
+    <View>
+      <View style={styles.container}>
+        <WebView
+          ref={webViewRef}
+          source={{ html: WEBVIEW_HTML }}
+          style={styles.webView}
+          onLoadEnd={handleLoadEnd}
+          scrollEnabled={false}
+          originWhitelist={['*']}
+          mediaPlaybackRequiresUserAction={false}
+          allowsInlineMediaPlayback={true}
+        />
+      </View>
+      <Pressable onPress={handleReplay}>
+        <Animated.View style={[styles.replayButton, { transform: [{ scale: scaleAnim }] }]}>
+          <Text style={styles.replayText}>♪ Spela igen</Text>
+        </Animated.View>
+      </Pressable>
     </View>
   );
 }
@@ -201,14 +224,29 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
     height: 230,
-    marginVertical: 4,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: '#c8a87a',
+    borderRadius: 10,
     overflow: 'hidden',
   },
   webView: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#fff8ee',
+  },
+  replayButton: {
+    alignSelf: 'center',
+    marginTop: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: '#c8a87a',
+    backgroundColor: '#fff8ee',
+  },
+  replayText: {
+    fontSize: 13,
+    color: '#6b4c30',
+    fontWeight: '600',
+    letterSpacing: 0.3,
   },
 });

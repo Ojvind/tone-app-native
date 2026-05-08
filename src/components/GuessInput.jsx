@@ -55,15 +55,17 @@ export default function GuessInput({ guesses, setGuesses, checked, results, note
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    gap: 8,
+    gap: 10,
   },
   group: {
-    gap: 4,
+    gap: 6,
   },
   groupLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#666',
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#9e7f5e',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
   },
   row: {
     flexDirection: 'row',
@@ -71,35 +73,36 @@ const styles = StyleSheet.create({
   },
   cell: {
     alignItems: 'center',
-    gap: 2,
+    gap: 3,
   },
   input: {
     width: 72,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: '#c8a87a',
+    borderRadius: 8,
     paddingHorizontal: 8,
-    paddingVertical: 6,
+    paddingVertical: 8,
     fontSize: 15,
     textAlign: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#fffdf5',
+    color: '#2c1a0e',
   },
   inputCorrect: {
-    borderColor: '#4caf50',
-    backgroundColor: '#f0fff0',
+    borderColor: '#3d6e4e',
+    backgroundColor: '#f0f7f2',
   },
   inputWrong: {
-    borderColor: '#f44336',
-    backgroundColor: '#fff0f0',
+    borderColor: '#8b3a3a',
+    backgroundColor: '#fdf2f2',
   },
   result: {
     fontSize: 12,
     fontWeight: '600',
   },
   correct: {
-    color: '#4caf50',
+    color: '#3d6e4e',
   },
   wrong: {
-    color: '#f44336',
+    color: '#8b3a3a',
   },
 });
