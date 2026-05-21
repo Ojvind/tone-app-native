@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { View, Pressable, Text, StyleSheet, Animated } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useTheme } from '../theme';
+import { useTranslation } from '../i18n';
 
 // All note rendering and audio lives in here so we can use VexFlow (DOM-based)
 // and Web Audio API, both of which require a browser environment.
@@ -179,6 +180,7 @@ const getWebViewHTML = (bgColor, noteColor) => `
 
 export default function NoteDisplay({ notes }) {
   const colors = useTheme();
+  const t = useTranslation();
   const webViewRef = useRef(null);
   const [loaded, setLoaded] = useState(false);
   const pendingRef = useRef(null);
@@ -231,7 +233,7 @@ export default function NoteDisplay({ notes }) {
           styles.replayButton,
           { borderColor: colors.border, backgroundColor: colors.card, transform: [{ scale: scaleAnim }] },
         ]}>
-          <Text style={[styles.replayText, { color: colors.textSecondary }]}>♪ Spela igen</Text>
+          <Text style={[styles.replayText, { color: colors.textSecondary }]}>{t.playAgain}</Text>
         </Animated.View>
       </Pressable>
     </View>

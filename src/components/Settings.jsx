@@ -1,13 +1,15 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '../theme';
+import { useTranslation } from '../i18n';
 
 export default function Settings({ totalRounds, setTotalRounds, onStart }) {
   const colors = useTheme();
+  const t = useTranslation();
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.label, { color: colors.textMuted }]}>Antal rundor</Text>
+      <Text style={[styles.label, { color: colors.textMuted }]}>{t.numberOfRounds}</Text>
       <View style={styles.row}>
         <Pressable
           style={[styles.stepButton, { backgroundColor: colors.stepBg, borderColor: colors.border }]}
@@ -27,7 +29,7 @@ export default function Settings({ totalRounds, setTotalRounds, onStart }) {
         style={[styles.startButton, { backgroundColor: colors.buttonBg }]}
         onPress={onStart}
       >
-        <Text style={[styles.startButtonText, { color: colors.buttonText }]}>Starta övning</Text>
+        <Text style={[styles.startButtonText, { color: colors.buttonText }]}>{t.startPractice}</Text>
       </Pressable>
     </View>
   );

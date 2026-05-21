@@ -12,11 +12,13 @@
     "preset": "jest-expo"
   },
   "dependencies": {
+    "@react-native-async-storage/async-storage": "1.23.1",
     "@react-native-community/cli": "^20.1.2",
     "@testing-library/jest-native": "^5.4.3",
     "@testing-library/react-native": "^13.3.3",
     "expo": "~52.0.0",
     "expo-asset": "~11.0.5",
+    "expo-localization": "~16.0.1",
     "expo-status-bar": "~2.0.0",
     "jest-expo": "~52.0.6",
     "react": "18.3.1",

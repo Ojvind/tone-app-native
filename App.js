@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -9,15 +9,29 @@ import {
   KeyboardAvoidingView,
   Platform,
   Dimensions,
+  Modal,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useGame } from './src/hooks/useGame';
 import { useTheme } from './src/theme';
+import { useTranslation } from './src/i18n';
 import Settings from './src/components/Settings';
 import NoteDisplay from './src/components/NoteDisplay';
 import GuessInput from './src/components/GuessInput';
 import ScoreBoard from './src/components/ScoreBoard';
 import GameOver from './src/components/GameOver';
+import Stats from './src/components/Stats';
+
+function StatsIcon({ color }) {
+  const bars = [{ h: 8 }, { h: 18 }, { h: 13 }];
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 3, height: 20, paddingHorizontal: 2 }}>
+      {bars.map((b, i) => (
+        <View key={i} style={{ width: 5, height: b.h, borderRadius: 2, backgroundColor: color }} />
+      ))}
+    </View>
+  );
+}
 
 function ClefDecorations({ color }) {
   return (
@@ -35,6 +49,8 @@ function ClefDecorations({ color }) {
 export default function App() {
   const { state, actions } = useGame();
   const colors = useTheme();
+  const t = useTranslation();
+  const [showStats, setShowStats] = useState(false);
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
@@ -47,7 +63,14 @@ export default function App() {
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled"
         >
-          <Text style={[styles.title, { color: colors.text }]}>Gissa noter</Text>
+          <View style={styles.titleRow}>
+            <Text style={[styles.title, { color: colors.text }]}>{t.title}</Text>
+            {!state.gameStarted && (
+              <Pressable onPress={() => setShowStats(true)} style={styles.statsButton}>
+                <StatsIcon color={colors.textMuted} />
+              </Pressable>
+            )}
+          </View>
           <View style={[styles.divider, { backgroundColor: colors.divider }]} />
 
           {!state.gameStarted && (
@@ -80,10 +103,10 @@ export default function App() {
               >
                 <Text style={[styles.buttonText, { color: colors.buttonText }]}>
                   {!state.checked
-                    ? 'Kontrollera svar'
+                    ? t.checkAnswers
                     : state.round + 1 < state.totalRounds
-                    ? 'Nästa'
-                    : 'Visa resultat'}
+                    ? t.next
+                    : t.showResults}
                 </Text>
               </Pressable>
             </View>
@@ -98,6 +121,11 @@ export default function App() {
           )}
         </ScrollView>
       </KeyboardAvoidingView>
+      <Modal visible={showStats} animationType="slide">
+        <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
+          <Stats onClose={() => setShowStats(false)} />
+        </SafeAreaView>
+      </Modal>
       <StatusBar style="auto" />
     </SafeAreaView>
   );
@@ -138,5 +166,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     letterSpacing: 0.5,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  statsButton: {
+    position: 'absolute',
+    right: 0,
   },
 });

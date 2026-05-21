@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TextInput, StyleSheet } from 'react-native';
 import { useTheme } from '../theme';
+import { useTranslation } from '../i18n';
 
 function formatNoteName(name) {
   if (name.endsWith('#')) return name.slice(0, -1) + '♯';
@@ -10,6 +11,7 @@ function formatNoteName(name) {
 
 export default function GuessInput({ guesses, setGuesses, checked, results, notes }) {
   const colors = useTheme();
+  const t = useTranslation();
 
   const handleChange = (index, value) => {
     const updated = [...guesses];
@@ -35,7 +37,7 @@ export default function GuessInput({ guesses, setGuesses, checked, results, note
               value={guesses[i] ?? ''}
               onChangeText={value => handleChange(i, value)}
               editable={!checked}
-              placeholder="e.g. C"
+              placeholder={t.placeholder}
               placeholderTextColor={colors.placeholder}
               autoCapitalize="characters"
               autoCorrect={false}
@@ -53,8 +55,8 @@ export default function GuessInput({ guesses, setGuesses, checked, results, note
 
   return (
     <View style={styles.container}>
-      {renderGroup('G-nyckel', [0, 1, 2, 3])}
-      {renderGroup('F-nyckel', [4, 5, 6, 7])}
+      {renderGroup(t.trebleClef, [0, 1, 2, 3])}
+      {renderGroup(t.bassClef, [4, 5, 6, 7])}
     </View>
   );
 }

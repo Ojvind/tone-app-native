@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { TREBLE_NOTES, BASS_NOTES } from '../constants';
+import { recordSession } from '../stats';
 
 const SHARP_TO_FLAT = {
   'C#': { name: 'Db', keyPrefix: 'db' },
@@ -33,6 +34,10 @@ export function useGame(initialRounds = 5) {
   const [gameStarted, setGameStarted] = useState(false);
   const [gameOver, setGameOver] = useState(false);
 
+  // Accumulate all notes and results across rounds for stats recording
+  const allNotesRef = useRef([]);
+  const allResultsRef = useRef([]);
+
   const generateNotes = () => {
     const trebleNotes = Array.from({ length: 4 }, () =>
       maybeConvertToFlat(TREBLE_NOTES[Math.floor(Math.random() * TREBLE_NOTES.length)])
@@ -60,6 +65,8 @@ export function useGame(initialRounds = 5) {
     setScore(prev => prev + roundScore);
     setResults(checkedResults);
     setChecked(true);
+    allNotesRef.current = [...allNotesRef.current, ...notes];
+    allResultsRef.current = [...allResultsRef.current, ...checkedResults];
   };
 
   const handleNext = () => {
@@ -69,6 +76,8 @@ export function useGame(initialRounds = 5) {
       setRound(prev => prev + 1);
       generateNotes();
     } else {
+      const total = totalRounds * 8;
+      recordSession({ score, total, notes: allNotesRef.current, results: allResultsRef.current });
       setGameOver(true);
     }
   };
@@ -78,6 +87,8 @@ export function useGame(initialRounds = 5) {
     setRound(0);
     setGameOver(false);
     setGameStarted(true);
+    allNotesRef.current = [];
+    allResultsRef.current = [];
     generateNotes();
   };
 

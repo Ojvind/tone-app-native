@@ -1,32 +1,21 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet, Image } from 'react-native';
 import { useTheme } from '../theme';
+import { useTranslation } from '../i18n';
 
 export default function GameOver({ score, totalRounds, onReset }) {
   const colors = useTheme();
+  const t = useTranslation();
   const total = totalRounds * 8;
   const percentage = Math.round((score / total) * 100);
-
-  let message;
-  if (percentage >= 90) message = 'Du är en mästare!';
-  else if (percentage >= 80) message = 'Imponerande, nästan perfekt!';
-  else if (percentage >= 70) message = 'Du är på god väg!';
-  else if (percentage >= 60) message = 'Inte illa, men det finns rum för förbättring.';
-  else if (percentage >= 50) message = 'Halvvägs där – öva lite till!';
-  else if (percentage >= 40) message = 'Det går trögt, men ge inte upp!';
-  else if (percentage >= 30) message = 'Noterna verkar inte vilja samarbeta...';
-  else if (percentage >= 20) message = 'Din granne ringer och ber dig sluta.';
-  else if (percentage >= 10) message = 'Katten på pianot hade gjort det bättre.';
-  else message = 'Du är tondöv, ge upp!';
+  const messageIndex = Math.min(Math.floor(percentage / 10), 9);
+  const message = t.messages[messageIndex];
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.title, { color: colors.text }]}>Spelet är slut!</Text>
-      <Text style={[styles.score, { color: colors.textSecondary }]}>
-        Du fick <Text style={[styles.bold, { color: colors.text }]}>{score}</Text> av{' '}
-        <Text style={[styles.bold, { color: colors.text }]}>{total}</Text> rätt.
-      </Text>
-      <Text style={[styles.percentage, { color: colors.buttonBg }]}>{percentage}% rätt</Text>
+      <Text style={[styles.title, { color: colors.text }]}>{t.gameOver}</Text>
+      <Text style={[styles.score, { color: colors.textSecondary }]}>{t.youGot(score, total)}</Text>
+      <Text style={[styles.percentage, { color: colors.buttonBg }]}>{t.percentCorrect(percentage)}</Text>
       <Text style={[styles.message, { color: colors.textSecondary }]}>{message}</Text>
       {percentage >= 90 && (
         <Image testID="img-90" source={require('../../assets/90-100-mozart-glasses.jpg')} style={[styles.mozart, { borderColor: colors.border }]} />
@@ -59,7 +48,7 @@ export default function GameOver({ score, totalRounds, onReset }) {
         <Image testID="img-0" source={require('../../assets/0-9-punkare-gitarr.jpg')} style={[styles.mozart, { borderColor: colors.border }]} />
       )}
       <Pressable style={[styles.button, { backgroundColor: colors.buttonBg }]} onPress={onReset}>
-        <Text style={[styles.buttonText, { color: colors.buttonText }]}>Spela igen</Text>
+        <Text style={[styles.buttonText, { color: colors.buttonText }]}>{t.playAgainButton}</Text>
       </Pressable>
     </View>
   );
