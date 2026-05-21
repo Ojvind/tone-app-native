@@ -4,6 +4,13 @@ import { useTheme } from '../theme';
 import { useTranslation } from '../i18n';
 import { loadStats } from '../stats';
 
+function formatNote(name) {
+  if (name.length > 1 && name.slice(-1).toLowerCase() === 'b') {
+    return name.slice(0, -1) + '♭';
+  }
+  return name.replace('#', '♯');
+}
+
 function StreakCard({ streak, colors, t }) {
   return (
     <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -16,7 +23,7 @@ function StreakCard({ streak, colors, t }) {
 
 function MissedNotes({ noteStats, colors, t }) {
   const sorted = Object.entries(noteStats)
-    .filter(([, s]) => s.total > 0)
+    .filter(([, s]) => s.total >= 3)
     .map(([name, s]) => ({ name, pct: Math.round((s.correct / s.total) * 100), total: s.total }))
     .sort((a, b) => a.pct - b.pct)
     .slice(0, 8);
@@ -29,7 +36,7 @@ function MissedNotes({ noteStats, colors, t }) {
       <Text style={[styles.cardSub, { color: colors.textMuted }]}>{t.missedNotesSub}</Text>
       {sorted.map(({ name, pct, total }) => (
         <View key={name} style={styles.noteRow}>
-          <Text style={[styles.noteName, { color: colors.text }]}>{name}</Text>
+          <Text style={[styles.noteName, { color: colors.text }]}>{formatNote(name)}</Text>
           <View style={[styles.barBg, { backgroundColor: colors.stepBg }]}>
             <View style={[styles.barFill, { width: `${pct}%`, backgroundColor: pct >= 70 ? colors.correct : pct >= 40 ? colors.buttonBg : colors.wrong }]} />
           </View>
