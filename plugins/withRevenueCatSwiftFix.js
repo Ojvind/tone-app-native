@@ -2,17 +2,31 @@ const { withDangerousMod } = require('@expo/config-plugins');
 const path = require('path');
 const fs = require('fs');
 
-// PurchasesHybridCommon/RevenueCat use @objc enum switches without @unknown default,
-// which is an error in Swift 6 (Xcode 26). Force Swift 5 mode for all pods to keep
-// these as warnings, and disable warnings-as-errors for the affected pods.
+// PurchasesHybridCommon has @objc enum switch statements without @unknown default.
+// In Swift 6 / Xcode 26 this is a compile error. We patch the source files in
+// post_install (after pod install downloads them).
+//
+// Two patterns appear in these files:
+//   • Multi-line:  "        case .x:\n            return \"Y\"\n        }"
+//   • Single-line: "        case .x: return \"Y\"\n        }"
+// We insert @unknown default before the closing } in both cases.
 const PATCH = `
-  installer.pods_project.targets.each do |target|
-    target.build_configurations.each do |config|
-      config.build_settings['SWIFT_VERSION'] = '5.0'
-      if ['PurchasesHybridCommon', 'RevenueCat', 'RNPurchases'].include?(target.name)
-        config.build_settings['SWIFT_TREAT_WARNINGS_AS_ERRORS'] = 'NO'
-        config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
-      end
+  pod_dir = installer.sandbox.pod_dir('PurchasesHybridCommon').to_s
+  Dir.glob(pod_dir + '/**/*.swift').each do |file|
+    content = File.read(file)
+    next if content.include?('@unknown default')
+    modified = content
+    # Multi-line case: 12-space return followed by 8-space }
+    modified = modified.gsub(/(            return "[^"]+")\\n(        \\})/) do
+      "#{$1}\\n        @unknown default: return \\"UNKNOWN\\"\\n#{$2}"
+    end
+    # Single-line case: 8-space "case .x: return" followed by 8-space }
+    modified = modified.gsub(/(        case [^\\n]+: return "[^"]+")\\n(        \\})/) do
+      "#{$1}\\n        @unknown default: return \\"UNKNOWN\\"\\n#{$2}"
+    end
+    if modified != content
+      File.write(file, modified)
+      puts "Patched #{File.basename(file)} for Xcode 26"
     end
   end
 `;
