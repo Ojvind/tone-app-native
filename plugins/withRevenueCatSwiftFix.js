@@ -10,14 +10,21 @@ const fs = require('fs');
 //   • Multi-line:  "        case .x:\n            return \"Y\"\n        }"
 //   • Single-line: "        case .x: return \"Y\"\n        }"
 // We insert @unknown default before the closing } in both cases.
+//
+// Some files (e.g. StoreProduct+HybridAdditions.swift) already have @unknown default
+// in some switch statements but not others — so we cannot skip the whole file.
+// The multi-line regex uses a negative lookbehind to avoid double-inserting into
+// existing @unknown default blocks.
 const PATCH = `
   pod_dir = installer.sandbox.pod_dir('PurchasesHybridCommon').to_s
-  Dir.glob(pod_dir + '/**/*.swift').each do |file|
+  puts "RC Swift fix: scanning #{pod_dir}"
+  swift_files = Dir.glob(pod_dir + '/**/*.swift')
+  puts "RC Swift fix: found #{swift_files.length} Swift files"
+  swift_files.each do |file|
     content = File.read(file)
-    next if content.include?('@unknown default')
     modified = content
-    # Multi-line case: 12-space return followed by 8-space }
-    modified = modified.gsub(/(            return "[^"]+")\\n(        \\})/) do
+    # Multi-line case: 12-space return NOT preceded by @unknown default line, followed by 8-space }
+    modified = modified.gsub(/(?<!        @unknown default:\\n)(            return "[^"]+")\\n(        \\})/) do
       "#{$1}\\n        @unknown default: return \\"UNKNOWN\\"\\n#{$2}"
     end
     # Single-line case: 8-space "case .x: return" followed by 8-space }
@@ -26,7 +33,7 @@ const PATCH = `
     end
     if modified != content
       File.write(file, modified)
-      puts "Patched #{File.basename(file)} for Xcode 26"
+      puts "RC Swift fix: patched #{File.basename(file)}"
     end
   end
 `;
