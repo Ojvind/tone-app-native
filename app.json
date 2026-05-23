@@ -28,7 +28,8 @@
     "newArchEnabled": true,
     "plugins": [
       "expo-asset",
-      "expo-localization"
+      "expo-localization",
+      "./plugins/withRevenueCatSwiftFix"
     ],
     "extra": {
       "eas": {
