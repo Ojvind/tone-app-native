@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -21,6 +21,8 @@ import GuessInput from './src/components/GuessInput';
 import ScoreBoard from './src/components/ScoreBoard';
 import GameOver from './src/components/GameOver';
 import Stats from './src/components/Stats';
+import Paywall from './src/components/Paywall';
+import { initPurchases, usePremium } from './src/premium';
 
 function StatsIcon({ color }) {
   const bars = [{ h: 8 }, { h: 18 }, { h: 13 }];
@@ -51,6 +53,9 @@ export default function App() {
   const colors = useTheme();
   const t = useTranslation();
   const [showStats, setShowStats] = useState(false);
+  const { isPremium, isLoading, priceString, purchase, restore } = usePremium();
+
+  useEffect(() => { initPurchases(); }, []);
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
@@ -123,7 +128,17 @@ export default function App() {
       </KeyboardAvoidingView>
       <Modal visible={showStats} animationType="slide">
         <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
-          <Stats onClose={() => setShowStats(false)} />
+          {isPremium
+            ? <Stats onClose={() => setShowStats(false)} />
+            : <Paywall
+                onClose={() => setShowStats(false)}
+                onSuccess={() => {}}
+                priceString={priceString}
+                isLoading={isLoading}
+                purchase={purchase}
+                restore={restore}
+              />
+          }
         </SafeAreaView>
       </Modal>
       <StatusBar style="auto" />
