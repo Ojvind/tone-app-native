@@ -4,17 +4,12 @@ const fs = require('fs');
 
 // PurchasesHybridCommon and RevenueCat have @objc enum switch statements without
 // @unknown default. In Swift 6 / Xcode 26 this is a compile error.
-// We patch the source files in post_install (after pod install downloads them).
 //
-// Two patterns appear in these files:
-//   • Single-line: "        case .x: return ANYTHING\n        }"
-//   • Multi-line:  "        case .x:\n            return ANYTHING\n        }"
-//
-// We use fatalError("Unhandled case") as the @unknown default body because it
-// compiles for any return type (Never is a subtype of everything).
-//
-// No file-level skip or lookbehind needed: fatalError(...) doesn't match
-// "case .x: return ..." so the regex is naturally idempotent.
+// Two-layer fix:
+// 1. File patching: add @unknown default to @objc enum switches in source files
+// 2. Build settings: force SWIFT_VERSION=5 for PurchasesHybridCommon target
+//    (Swift 5 mode treats missing @unknown default as a warning, not an error)
+//    This is the fallback in case file patching misses a pattern on EAS.
 const PATCH = `
   ['PurchasesHybridCommon', 'RevenueCat'].each do |pod_name|
     pod_dir = installer.sandbox.pod_dir(pod_name).to_s
@@ -36,6 +31,15 @@ const PATCH = `
         File.write(file, modified)
         puts "RC Swift fix: patched #{File.basename(file)}"
       end
+    end
+  end
+
+  installer.pods_project.targets.each do |target|
+    if target.name == 'PurchasesHybridCommon'
+      target.build_configurations.each do |config|
+        config.build_settings['SWIFT_VERSION'] = '5'
+      end
+      puts "RC Swift fix: set SWIFT_VERSION=5 for #{target.name}"
     end
   end
 `;
