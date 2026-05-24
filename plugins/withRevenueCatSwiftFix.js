@@ -2,38 +2,40 @@ const { withDangerousMod } = require('@expo/config-plugins');
 const path = require('path');
 const fs = require('fs');
 
-// PurchasesHybridCommon has @objc enum switch statements without @unknown default.
-// In Swift 6 / Xcode 26 this is a compile error. We patch the source files in
-// post_install (after pod install downloads them).
+// PurchasesHybridCommon and RevenueCat have @objc enum switch statements without
+// @unknown default. In Swift 6 / Xcode 26 this is a compile error.
+// We patch the source files in post_install (after pod install downloads them).
 //
 // Two patterns appear in these files:
-//   • Multi-line:  "        case .x:\n            return \"Y\"\n        }"
-//   • Single-line: "        case .x: return \"Y\"\n        }"
-// We insert @unknown default before the closing } in both cases.
+//   • Single-line: "        case .x: return ANYTHING\n        }"
+//   • Multi-line:  "        case .x:\n            return ANYTHING\n        }"
 //
-// Some files (e.g. StoreProduct+HybridAdditions.swift) already have @unknown default
-// in some switch statements but not others — so we cannot skip the whole file.
-// The multi-line regex uses a negative lookbehind to avoid double-inserting into
-// existing @unknown default blocks.
+// We use fatalError("Unhandled case") as the @unknown default body because it
+// compiles for any return type (Never is a subtype of everything).
+//
+// No file-level skip or lookbehind needed: fatalError(...) doesn't match
+// "case .x: return ..." so the regex is naturally idempotent.
 const PATCH = `
-  pod_dir = installer.sandbox.pod_dir('PurchasesHybridCommon').to_s
-  puts "RC Swift fix: scanning #{pod_dir}"
-  swift_files = Dir.glob(pod_dir + '/**/*.swift')
-  puts "RC Swift fix: found #{swift_files.length} Swift files"
-  swift_files.each do |file|
-    content = File.read(file)
-    modified = content
-    # Multi-line case: 12-space return NOT preceded by @unknown default line, followed by 8-space }
-    modified = modified.gsub(/(?<!        @unknown default:\\n)(            return "[^"]+")\\n(        \\})/) do
-      "#{$1}\\n        @unknown default: return \\"UNKNOWN\\"\\n#{$2}"
-    end
-    # Single-line case: 8-space "case .x: return" followed by 8-space }
-    modified = modified.gsub(/(        case [^\\n]+: return "[^"]+")\\n(        \\})/) do
-      "#{$1}\\n        @unknown default: return \\"UNKNOWN\\"\\n#{$2}"
-    end
-    if modified != content
-      File.write(file, modified)
-      puts "RC Swift fix: patched #{File.basename(file)}"
+  ['PurchasesHybridCommon', 'RevenueCat'].each do |pod_name|
+    pod_dir = installer.sandbox.pod_dir(pod_name).to_s
+    puts "RC Swift fix: scanning #{pod_dir} (#{pod_name})"
+    swift_files = Dir.glob(pod_dir + '/**/*.swift')
+    puts "RC Swift fix: found #{swift_files.length} Swift files in #{pod_name}"
+    swift_files.each do |file|
+      content = File.read(file)
+      modified = content
+      # Single-line: 8-space "case .x: return anything" followed by 8-space }
+      modified = modified.gsub(/(        case [^\\n]+: return [^\\n]+)\\n(        \\})/) do
+        "#{$1}\\n        @unknown default: fatalError(\\"Unhandled case\\")\\n#{$2}"
+      end
+      # Multi-line: 8-space "case .x:" then 12-space "return anything" followed by 8-space }
+      modified = modified.gsub(/(        case [^\\n]+:\\n            return [^\\n]+)\\n(        \\})/) do
+        "#{$1}\\n        @unknown default: fatalError(\\"Unhandled case\\")\\n#{$2}"
+      end
+      if modified != content
+        File.write(file, modified)
+        puts "RC Swift fix: patched #{File.basename(file)}"
+      end
     end
   end
 `;
