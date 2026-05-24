@@ -2,30 +2,28 @@ const { withDangerousMod } = require('@expo/config-plugins');
 const path = require('path');
 const fs = require('fs');
 
-// PurchasesHybridCommon and RevenueCat have @objc enum switch statements without
-// @unknown default. In Swift 6 / Xcode 26 this is a compile error.
+// Multiple pods have @objc enum switch statements without @unknown default.
+// In Swift 6 / Xcode 26 this is a compile error.
 //
-// Two-layer fix:
-// 1. File patching: add @unknown default to @objc enum switches in source files
-// 2. Build settings: force SWIFT_VERSION=5 for PurchasesHybridCommon target
-//    (Swift 5 mode treats missing @unknown default as a warning, not an error)
-//    This is the fallback in case file patching misses a pattern on EAS.
+// Affected: PurchasesHybridCommon, RevenueCat (8-space indent),
+//           expo-localization LocalizationModule.swift (4-space indent).
+//
+// Fix strategy:
+// 1. File patching with indentation-aware regexes (backreference \\2 matches
+//    the same indent on the closing }) — works for any indent depth.
+// 2. SWIFT_VERSION=5 build setting for PurchasesHybridCommon as fallback.
 const PATCH = `
-  ['PurchasesHybridCommon', 'RevenueCat'].each do |pod_name|
-    pod_dir = installer.sandbox.pod_dir(pod_name).to_s
-    puts "RC Swift fix: scanning #{pod_dir} (#{pod_name})"
-    swift_files = Dir.glob(pod_dir + '/**/*.swift')
-    puts "RC Swift fix: found #{swift_files.length} Swift files in #{pod_name}"
+  def rc_patch_swift_files(swift_files)
     swift_files.each do |file|
       content = File.read(file)
       modified = content
-      # Single-line: 8-space "case .x: return anything" followed by 8-space }
-      modified = modified.gsub(/(        case [^\\n]+: return [^\\n]+)\\n(        \\})/) do
-        "#{$1}\\n        @unknown default: fatalError(\\"Unhandled case\\")\\n#{$2}"
+      # Single-line: "<indent>case .x: return anything" + same-indent }
+      modified = modified.gsub(/(( +)case [^\\n]+: return [^\\n]+)\\n(\\2\\})/) do
+        "#{$1}\\n#{$2}@unknown default: fatalError(\\"Unhandled case\\")\\n#{$3}"
       end
-      # Multi-line: 8-space "case .x:" then 12-space "return anything" followed by 8-space }
-      modified = modified.gsub(/(        case [^\\n]+:\\n            return [^\\n]+)\\n(        \\})/) do
-        "#{$1}\\n        @unknown default: fatalError(\\"Unhandled case\\")\\n#{$2}"
+      # Multi-line: "<indent>case .x:" + "<deeper-indent>return anything" + same-indent }
+      modified = modified.gsub(/(( +)case [^\\n]+:\\n +return [^\\n]+)\\n(\\2\\})/) do
+        "#{$1}\\n#{$2}@unknown default: fatalError(\\"Unhandled case\\")\\n#{$3}"
       end
       if modified != content
         File.write(file, modified)
@@ -34,6 +32,22 @@ const PATCH = `
     end
   end
 
+  # Patch pod directories (PurchasesHybridCommon, RevenueCat)
+  ['PurchasesHybridCommon', 'RevenueCat'].each do |pod_name|
+    pod_dir = installer.sandbox.pod_dir(pod_name).to_s
+    swift_files = Dir.glob(pod_dir + '/**/*.swift')
+    puts "RC Swift fix: #{swift_files.length} files in pod #{pod_name}"
+    rc_patch_swift_files(swift_files)
+  end
+
+  # Patch expo-localization (compiled directly from node_modules, not from Pods dir)
+  project_root = File.expand_path('..', Pod::Config.instance.installation_root)
+  expo_loc_dir = File.join(project_root, 'node_modules', 'expo-localization', 'ios')
+  expo_loc_files = Dir.glob(expo_loc_dir + '/**/*.swift')
+  puts "RC Swift fix: #{expo_loc_files.length} files in expo-localization"
+  rc_patch_swift_files(expo_loc_files)
+
+  # Build settings fallback: force Swift 5 language mode for PurchasesHybridCommon
   installer.pods_project.targets.each do |target|
     if target.name == 'PurchasesHybridCommon'
       target.build_configurations.each do |config|
