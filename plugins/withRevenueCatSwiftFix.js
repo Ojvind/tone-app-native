@@ -69,6 +69,18 @@ const PATCH = `
       puts "RC Swift fix: patched DispatchTimeInterval+Extensions.swift"
     end
   end
+
+  # Xcode 26 / Apple Clang enforces consteval strictly — fmt's FMT_COMPILE_STRING
+  # fails to compile when called with non-constexpr arguments (folly, RCT-Folly).
+  # Setting FMT_USE_CONSTEVAL=0 disables compile-time format string validation.
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      flags = config.build_settings['OTHER_CPLUSPLUSFLAGS'] || '$(inherited)'
+      unless flags.include?('FMT_USE_CONSTEVAL')
+        config.build_settings['OTHER_CPLUSPLUSFLAGS'] = flags + ' -DFMT_USE_CONSTEVAL=0'
+      end
+    end
+  end
 `;
 
 module.exports = function withRevenueCatSwiftFix(config) {
