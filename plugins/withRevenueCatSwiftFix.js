@@ -70,15 +70,20 @@ const PATCH = `
     end
   end
 
-  # Xcode 26 / Apple Clang enforces consteval strictly — fmt's FMT_COMPILE_STRING
-  # fails to compile when called with non-constexpr arguments (folly, RCT-Folly).
-  # Setting FMT_USE_CONSTEVAL=0 disables compile-time format string validation.
-  installer.pods_project.targets.each do |target|
-    target.build_configurations.each do |config|
-      flags = config.build_settings['OTHER_CPLUSPLUSFLAGS'] || '$(inherited)'
-      unless flags.include?('FMT_USE_CONSTEVAL')
-        config.build_settings['OTHER_CPLUSPLUSFLAGS'] = flags + ' -DFMT_USE_CONSTEVAL=0'
-      end
+  # Xcode 26 / Apple Clang enforces consteval strictly — fmt 11's FMT_COMPILE_STRING
+  # constructor is consteval and fails when called with non-constexpr args (folly).
+  # Patching fmt/base.h directly is the only reliable fix: xcconfig layering can
+  # shadow build-setting overrides, but a header patch is always processed first.
+  fmt_base = File.join(installer.sandbox.root.to_s, 'fmt/include/fmt/base.h')
+  if File.exist?(fmt_base)
+    content = File.read(fmt_base)
+    unless content.start_with?('// rc-patch')
+      patched = "// rc-patch: disable consteval for Xcode 26 compatibility\\n" \\
+                "#ifndef FMT_USE_CONSTEVAL\\n" \\
+                "#define FMT_USE_CONSTEVAL 0\\n" \\
+                "#endif\\n" + content
+      File.write(fmt_base, patched)
+      puts "RC Swift fix: patched fmt/base.h (FMT_USE_CONSTEVAL=0)"
     end
   end
 `;
