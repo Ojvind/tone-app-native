@@ -74,16 +74,23 @@ const PATCH = `
   # constructor is consteval and fails when called with non-constexpr args (folly).
   # Patching fmt/base.h directly is the only reliable fix: xcconfig layering can
   # shadow build-setting overrides, but a header patch is always processed first.
-  fmt_base = File.join(installer.sandbox.root.to_s, 'fmt/include/fmt/base.h')
-  if File.exist?(fmt_base)
+  fmt_candidates = [
+    File.join(installer.sandbox.pod_dir('fmt').to_s, 'include/fmt/base.h'),
+    File.join(installer.sandbox.root.to_s, 'fmt/include/fmt/base.h'),
+  ] + Dir.glob(File.join(installer.sandbox.root.to_s, '**/fmt/base.h'))
+  fmt_base = fmt_candidates.find { |f| File.exist?(f) }
+  puts "RC Swift fix: fmt/base.h => #{fmt_base || 'NOT FOUND (searched: ' + fmt_candidates.first(2).join(', ') + ')'}"
+  if fmt_base
     content = File.read(fmt_base)
     unless content.start_with?('// rc-patch')
-      patched = "// rc-patch: disable consteval for Xcode 26 compatibility\\n" \\
+      patched = "// rc-patch: FMT_USE_CONSTEVAL=0 for Xcode 26\\n" \\
                 "#ifndef FMT_USE_CONSTEVAL\\n" \\
                 "#define FMT_USE_CONSTEVAL 0\\n" \\
                 "#endif\\n" + content
       File.write(fmt_base, patched)
-      puts "RC Swift fix: patched fmt/base.h (FMT_USE_CONSTEVAL=0)"
+      puts "RC Swift fix: patched fmt/base.h"
+    else
+      puts "RC Swift fix: fmt/base.h already patched, skipping"
     end
   end
 `;
