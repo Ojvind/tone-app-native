@@ -56,6 +56,19 @@ const PATCH = `
       puts "RC Swift fix: set SWIFT_VERSION=5 for #{target.name}"
     end
   end
+
+  # DispatchTimeInterval may gain new cases on future OS versions.
+  # The original SDK fatalErrors on @unknown default — patch to return 0 instead.
+  dispatch_file = File.join(installer.sandbox.pod_dir('RevenueCat').to_s,
+    'Sources/FoundationExtensions/DispatchTimeInterval+Extensions.swift')
+  if File.exist?(dispatch_file)
+    content = File.read(dispatch_file)
+    modified = content.gsub(/@unknown default: fatalError\\("Unknown value: \\\\\\(self\\)"\\)/, '@unknown default: return 0')
+    if modified != content
+      File.write(dispatch_file, modified)
+      puts "RC Swift fix: patched DispatchTimeInterval+Extensions.swift"
+    end
+  end
 `;
 
 module.exports = function withRevenueCatSwiftFix(config) {
