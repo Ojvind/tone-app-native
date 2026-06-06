@@ -70,37 +70,16 @@ const PATCH = `
     end
   end
 
-  # Xcode 26 / Apple Clang enforces consteval strictly — fmt 11's FMT_COMPILE_STRING
-  # constructor is consteval and fails when called with non-constexpr args (folly).
-  # Patching fmt/base.h directly is the only reliable fix: xcconfig layering can
-  # shadow build-setting overrides, but a header patch is always processed first.
-  fmt_candidates = [
-    File.join(installer.sandbox.pod_dir('fmt').to_s, 'include/fmt/base.h'),
-    File.join(installer.sandbox.root.to_s, 'fmt/include/fmt/base.h'),
-  ] + Dir.glob(File.join(installer.sandbox.root.to_s, '**/fmt/base.h'))
-  fmt_base = fmt_candidates.find { |f| File.exist?(f) }
-  puts "RC Swift fix: fmt/base.h => #{fmt_base || 'NOT FOUND (searched: ' + fmt_candidates.first(2).join(', ') + ')'}"
-  if fmt_base
-    content = File.read(fmt_base)
-    unless content.start_with?('// rc-patch')
-      patched = "// rc-patch: FMT_USE_CONSTEVAL=0 for Xcode 26\\n" \\
-                "#ifndef FMT_USE_CONSTEVAL\\n" \\
-                "#define FMT_USE_CONSTEVAL 0\\n" \\
-                "#endif\\n" + content
-      File.write(fmt_base, patched)
-      puts "RC Swift fix: patched fmt/base.h"
-    else
-      puts "RC Swift fix: fmt/base.h already patched, skipping"
-    end
-  end
+  # (fmt fix is in FMT_PATCH constant, injected separately — see module.exports below)
 `;
 
 // Extracted so it can be injected independently when only this piece is missing.
 const FMT_PATCH = `
-  # Xcode 26 / Apple Clang enforces consteval strictly — fmt 11's FMT_COMPILE_STRING
-  # constructor is consteval and fails when called with non-constexpr args (folly).
-  # Patching fmt/base.h directly is the only reliable fix: xcconfig layering can
-  # shadow build-setting overrides, but a header patch is always processed first.
+  # fmt 11's detection block unconditionally redefines FMT_USE_CONSTEVAL based on
+  # compiler features — there is no #ifndef guard. Under Xcode 26 the block sets it
+  # to 1 (consteval enabled), then the consteval constructor rejects runtime args.
+  # Fix: insert #undef + #define 0 immediately after the detection block ends,
+  # right before "#if FMT_USE_CONSTEVAL / #  define FMT_CONSTEVAL consteval".
   fmt_candidates = [
     File.join(installer.sandbox.pod_dir('fmt').to_s, 'include/fmt/base.h'),
     File.join(installer.sandbox.root.to_s, 'fmt/include/fmt/base.h'),
@@ -109,15 +88,17 @@ const FMT_PATCH = `
   puts "RC Swift fix: fmt/base.h => #{fmt_base || 'NOT FOUND'}"
   if fmt_base
     content = File.read(fmt_base)
-    unless content.start_with?('// rc-patch')
-      patched = "// rc-patch: FMT_USE_CONSTEVAL=0 for Xcode 26\\n" \\
-                "#ifndef FMT_USE_CONSTEVAL\\n" \\
-                "#define FMT_USE_CONSTEVAL 0\\n" \\
-                "#endif\\n" + content
-      File.write(fmt_base, patched)
-      puts "RC Swift fix: patched fmt/base.h"
+    needle   = /#if FMT_USE_CONSTEVAL\\n#  define FMT_CONSTEVAL consteval/
+    patch_hdr = "// rc-patch: force FMT_USE_CONSTEVAL=0 for Xcode 26\\n" \\
+                "#undef FMT_USE_CONSTEVAL\\n" \\
+                "#define FMT_USE_CONSTEVAL 0\\n"
+    if content.match?(needle) && !content.include?('rc-patch')
+      File.write(fmt_base, content.sub(needle, patch_hdr + "#if FMT_USE_CONSTEVAL\\n#  define FMT_CONSTEVAL consteval"))
+      puts "RC Swift fix: patched fmt/base.h (inserted undef after detection block)"
+    elsif content.include?('rc-patch')
+      puts "RC Swift fix: fmt/base.h already patched"
     else
-      puts "RC Swift fix: fmt/base.h already patched, skipping"
+      puts "RC Swift fix: fmt/base.h NEEDLE not found — unexpected fmt version"
     end
   end
 `;
@@ -130,14 +111,19 @@ module.exports = function withRevenueCatSwiftFix(config) {
       let podfile = fs.readFileSync(podfilePath, 'utf8');
 
       if (!podfile.includes('# revenuecat-swift-fix')) {
-        // Fresh Podfile: inject the full patch block.
+        // Fresh Podfile: inject the full RC patch block, then the fmt fix.
         podfile = podfile.replace(
           /post_install do \|installer\|/,
           `post_install do |installer| # revenuecat-swift-fix\n${PATCH}`
         );
-      } else if (!podfile.includes('FMT_USE_CONSTEVAL')) {
-        // Old patch is present but missing the fmt fix — inject it immediately
-        // before the react_native_post_install call so it runs during pod install.
+        podfile = podfile.replace(
+          /\n    react_native_post_install\(/,
+          `\n${FMT_PATCH}    react_native_post_install(`
+        );
+      } else if (!podfile.includes('rc-patch: force FMT_USE_CONSTEVAL')) {
+        // Old patch is present but missing the (correct) fmt fix.
+        // Remove any prior attempt that used the prepend strategy, then inject.
+        podfile = podfile.replace(/\n  # fmt \d+.*?fmt\/base\.h.*?\n  end\n/s, '\n');
         podfile = podfile.replace(
           /\n    react_native_post_install\(/,
           `\n${FMT_PATCH}    react_native_post_install(`
