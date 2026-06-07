@@ -50,7 +50,7 @@ const sv = {
 };
 
 const en = {
-  title: 'Guess the Notes',
+  title: 'Sheet Music Quiz',
   numberOfRounds: 'Number of rounds',
   startPractice: 'Start practice',
   round: 'Round',
