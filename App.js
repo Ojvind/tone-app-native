@@ -24,6 +24,10 @@ import Stats from './src/components/Stats';
 import Paywall from './src/components/Paywall';
 import { initPurchases, usePremium } from './src/premium';
 
+// Configure RevenueCat at module load time so it is always ready before
+// any component effect calls getCustomerInfo() or getOfferings().
+initPurchases();
+
 function StatsIcon({ color }) {
   const bars = [{ h: 8 }, { h: 18 }, { h: 13 }];
   return (
@@ -55,7 +59,6 @@ export default function App() {
   const [showStats, setShowStats] = useState(false);
   const { isPremium, isLoading, priceString, purchase, restore } = usePremium();
 
-  useEffect(() => { initPurchases(); }, []);
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>

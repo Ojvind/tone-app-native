@@ -73,6 +73,22 @@ const PATCH = `
   # (fmt fix is in FMT_PATCH constant, injected separately — see module.exports below)
 `;
 
+// DispatchTimeInterval gains new cases on future OS versions; original SDK uses fatalError.
+const DISPATCH_PATCH = `
+  dispatch_file = File.join(installer.sandbox.pod_dir('RevenueCat').to_s,
+    'Sources/FoundationExtensions/DispatchTimeInterval+Extensions.swift')
+  if File.exist?(dispatch_file)
+    content = File.read(dispatch_file)
+    modified = content.gsub(/@unknown default: fatalError\\("Unknown value: \\\\\\(self\\)"\\)/, '@unknown default: return 0')
+    if modified != content
+      File.write(dispatch_file, modified)
+      puts "RC Swift fix: patched DispatchTimeInterval+Extensions.swift"
+    else
+      puts "RC Swift fix: DispatchTimeInterval already patched or pattern not found"
+    end
+  end
+`;
+
 // Extracted so it can be injected independently when only this piece is missing.
 const FMT_PATCH = `
   # fmt 11's detection block unconditionally redefines FMT_USE_CONSTEVAL based on
@@ -120,14 +136,21 @@ module.exports = function withRevenueCatSwiftFix(config) {
           /\n    react_native_post_install\(/,
           `\n${FMT_PATCH}    react_native_post_install(`
         );
-      } else if (!podfile.includes('rc-patch: force FMT_USE_CONSTEVAL')) {
-        // Old patch is present but missing the (correct) fmt fix.
-        // Remove any prior attempt that used the prepend strategy, then inject.
-        podfile = podfile.replace(/\n  # fmt \d+.*?fmt\/base\.h.*?\n  end\n/s, '\n');
-        podfile = podfile.replace(
-          /\n    react_native_post_install\(/,
-          `\n${FMT_PATCH}    react_native_post_install(`
-        );
+      } else {
+        // Old patch present — inject any missing pieces before react_native_post_install.
+        if (!podfile.includes('rc-patch: force FMT_USE_CONSTEVAL')) {
+          podfile = podfile.replace(/\n  # fmt \d+.*?fmt\/base\.h.*?\n  end\n/s, '\n');
+          podfile = podfile.replace(
+            /\n    react_native_post_install\(/,
+            `\n${FMT_PATCH}    react_native_post_install(`
+          );
+        }
+        if (!podfile.includes('DispatchTimeInterval+Extensions')) {
+          podfile = podfile.replace(
+            /\n    react_native_post_install\(/,
+            `\n${DISPATCH_PATCH}    react_native_post_install(`
+          );
+        }
       }
 
       fs.writeFileSync(podfilePath, podfile);
