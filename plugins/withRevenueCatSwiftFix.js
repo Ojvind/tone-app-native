@@ -63,10 +63,14 @@ const PATCH = `
     'Sources/FoundationExtensions/DispatchTimeInterval+Extensions.swift')
   if File.exist?(dispatch_file)
     content = File.read(dispatch_file)
-    modified = content.gsub(/@unknown default: fatalError\\("Unknown value: \\\\\\(self\\)"\\)/, '@unknown default: return 0')
+    original = '@unknown default: fatalError("Unknown value: \\(self)")'
+    modified = content.gsub(original, '@unknown default: return 0')
+    count = content.scan(original).length
     if modified != content
       File.write(dispatch_file, modified)
-      puts "RC Swift fix: patched DispatchTimeInterval+Extensions.swift"
+      puts "RC Swift fix: patched DispatchTimeInterval+Extensions.swift (#{count} sites)"
+    else
+      puts "RC Swift fix: DispatchTimeInterval pattern not found (count=#{count}) — already patched?"
     end
   end
 
@@ -79,12 +83,14 @@ const DISPATCH_PATCH = `
     'Sources/FoundationExtensions/DispatchTimeInterval+Extensions.swift')
   if File.exist?(dispatch_file)
     content = File.read(dispatch_file)
-    modified = content.gsub(/@unknown default: fatalError\\("Unknown value: \\\\\\(self\\)"\\)/, '@unknown default: return 0')
+    original = '@unknown default: fatalError("Unknown value: \\(self)")'
+    modified = content.gsub(original, '@unknown default: return 0')
+    count = content.scan(original).length
     if modified != content
       File.write(dispatch_file, modified)
-      puts "RC Swift fix: patched DispatchTimeInterval+Extensions.swift"
+      puts "RC Swift fix: patched DispatchTimeInterval+Extensions.swift (#{count} sites)"
     else
-      puts "RC Swift fix: DispatchTimeInterval already patched or pattern not found"
+      puts "RC Swift fix: DispatchTimeInterval pattern not found (count=#{count}) — already patched?"
     end
   end
 `;

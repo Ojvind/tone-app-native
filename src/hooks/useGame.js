@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { TREBLE_NOTES, BASS_NOTES } from '../constants';
 import { recordSession } from '../stats';
 
@@ -23,6 +23,21 @@ function maybeConvertToFlat(note) {
   };
 }
 
+function filterByDifficulty(notes, difficulty) {
+  if (difficulty === 'advanced') return notes;
+  if (difficulty === 'intermediate') return notes.filter(n => n.difficulty === 'beginner' || n.difficulty === 'intermediate');
+  return notes.filter(n => n.difficulty === 'beginner');
+}
+
+function pickUnique(arr, count) {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy.slice(0, count);
+}
+
 export function useGame(initialRounds = 5) {
   const [notes, setNotes] = useState([]);
   const [guesses, setGuesses] = useState([]);
@@ -33,26 +48,31 @@ export function useGame(initialRounds = 5) {
   const [totalRounds, setTotalRounds] = useState(initialRounds);
   const [gameStarted, setGameStarted] = useState(false);
   const [gameOver, setGameOver] = useState(false);
+  const [difficulty, _setDifficulty] = useState('beginner');
+  const difficultyRef = useRef('beginner');
+  const setDifficulty = useCallback((d) => {
+    difficultyRef.current = d;
+    _setDifficulty(d);
+  }, []);
 
-  // Accumulate all notes and results across rounds for stats recording
   const allNotesRef = useRef([]);
   const allResultsRef = useRef([]);
 
   const generateNotes = () => {
-    const trebleNotes = Array.from({ length: 4 }, () =>
-      maybeConvertToFlat(TREBLE_NOTES[Math.floor(Math.random() * TREBLE_NOTES.length)])
-    ).map(note => ({ ...note, clef: 'treble' }));
+    const treblePool = filterByDifficulty(TREBLE_NOTES, difficultyRef.current);
+    const bassPool = filterByDifficulty(BASS_NOTES, difficultyRef.current);
 
-    const bassNotes = Array.from({ length: 4 }, () =>
-      maybeConvertToFlat(BASS_NOTES[Math.floor(Math.random() * BASS_NOTES.length)])
-    ).map(note => ({ ...note, clef: 'bass' }));
+    const trebleNotes = pickUnique(treblePool, 4)
+      .map(note => ({ ...maybeConvertToFlat(note), clef: 'treble' }));
+
+    const bassNotes = pickUnique(bassPool, 4)
+      .map(note => ({ ...maybeConvertToFlat(note), clef: 'bass' }));
 
     const allNotes = [...trebleNotes, ...bassNotes];
     setNotes(allNotes);
     setGuesses(Array(allNotes.length).fill(''));
     setResults([]);
     setChecked(false);
-    // Audio is played by NoteDisplay WebView when it receives the new notes
   };
 
   const checkAnswers = () => {
@@ -114,10 +134,12 @@ export function useGame(initialRounds = 5) {
       totalRounds,
       gameStarted,
       gameOver,
+      difficulty,
     },
     actions: {
       setGuesses,
       setTotalRounds,
+      setDifficulty,
       generateNotes,
       checkAnswers,
       handleNext,

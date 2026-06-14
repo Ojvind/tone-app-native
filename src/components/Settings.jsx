@@ -3,12 +3,53 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '../theme';
 import { useTranslation } from '../i18n';
 
-export default function Settings({ totalRounds, setTotalRounds, onStart }) {
+export default function Settings({
+  totalRounds,
+  setTotalRounds,
+  difficulty,
+  setDifficulty,
+  isPremium,
+  onPremiumRequired,
+  onStart,
+}) {
   const colors = useTheme();
   const t = useTranslation();
 
+  const DIFFICULTY_OPTIONS = [
+    { key: 'beginner', label: t.difficultyBeginner, desc: t.difficultyBeginnerDesc, premium: false },
+    { key: 'intermediate', label: t.difficultyIntermediate, desc: t.difficultyIntermediateDesc, premium: true },
+    { key: 'advanced', label: t.difficultyAdvanced, desc: t.difficultyAdvancedDesc, premium: true },
+  ];
+
   return (
     <View style={styles.container}>
+      <Text style={[styles.label, { color: colors.textMuted }]}>{t.difficulty}</Text>
+      <View style={styles.difficultyRow}>
+        {DIFFICULTY_OPTIONS.map(({ key, label, desc, premium }) => {
+          const locked = premium && !isPremium;
+          const selected = difficulty === key;
+          const textColor = selected ? colors.buttonText : locked ? colors.textMuted : colors.text;
+          return (
+            <Pressable
+              key={key}
+              style={[
+                styles.diffPill,
+                { borderColor: colors.border },
+                selected
+                  ? { backgroundColor: colors.buttonBg }
+                  : { backgroundColor: colors.stepBg },
+              ]}
+              onPress={() => locked ? onPremiumRequired(key) : setDifficulty(key)}
+            >
+              <Text style={[styles.diffPillText, { color: textColor }]}>
+                {locked ? '🔒 ' : ''}{label}
+              </Text>
+              <Text style={[styles.diffPillDesc, { color: textColor }]}>{desc}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
       <Text style={[styles.label, { color: colors.textMuted }]}>{t.numberOfRounds}</Text>
       <View style={styles.row}>
         <Pressable
@@ -46,6 +87,31 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 1.2,
     textTransform: 'uppercase',
+  },
+  difficultyRow: {
+    flexDirection: 'row',
+    gap: 8,
+    width: '100%',
+  },
+  diffPill: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  diffPillText: {
+    fontSize: 13,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  diffPillDesc: {
+    fontSize: 11,
+    fontWeight: '400',
+    textAlign: 'center',
+    marginTop: 2,
+    opacity: 0.8,
   },
   row: {
     flexDirection: 'row',

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -8,7 +8,6 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  Dimensions,
   Modal,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
@@ -57,8 +56,38 @@ export default function App() {
   const colors = useTheme();
   const t = useTranslation();
   const [showStats, setShowStats] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [pendingDifficulty, setPendingDifficulty] = useState(null);
   const { isPremium, isLoading, priceString, purchase, restore } = usePremium();
 
+  function handleStatsPress() {
+    if (isLoading) return;
+    if (isPremium) {
+      setShowStats(true);
+    } else {
+      setShowPaywall(true);
+    }
+  }
+
+  function handlePremiumRequired(difficulty) {
+    setPendingDifficulty(difficulty);
+    setShowPaywall(true);
+  }
+
+  function handlePaywallSuccess() {
+    if (pendingDifficulty) {
+      actions.setDifficulty(pendingDifficulty);
+      setPendingDifficulty(null);
+    } else {
+      setShowStats(true);
+    }
+    setShowPaywall(false);
+  }
+
+  function handlePaywallClose() {
+    setPendingDifficulty(null);
+    setShowPaywall(false);
+  }
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
@@ -74,7 +103,7 @@ export default function App() {
           <View style={styles.titleRow}>
             <Text style={[styles.title, { color: colors.text }]}>{t.title}</Text>
             {!state.gameStarted && (
-              <Pressable onPress={() => setShowStats(true)} style={styles.statsButton}>
+              <Pressable onPress={handleStatsPress} style={styles.statsButton}>
                 <StatsIcon color={colors.textMuted} />
               </Pressable>
             )}
@@ -85,6 +114,10 @@ export default function App() {
             <Settings
               totalRounds={state.totalRounds}
               setTotalRounds={actions.setTotalRounds}
+              difficulty={state.difficulty}
+              setDifficulty={actions.setDifficulty}
+              isPremium={isPremium}
+              onPremiumRequired={handlePremiumRequired}
               onStart={actions.startGame}
             />
           )}
@@ -129,21 +162,26 @@ export default function App() {
           )}
         </ScrollView>
       </KeyboardAvoidingView>
+
       <Modal visible={showStats} animationType="slide">
         <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
-          {isPremium
-            ? <Stats onClose={() => setShowStats(false)} />
-            : <Paywall
-                onClose={() => setShowStats(false)}
-                onSuccess={() => {}}
-                priceString={priceString}
-                isLoading={isLoading}
-                purchase={purchase}
-                restore={restore}
-              />
-          }
+          <Stats onClose={() => setShowStats(false)} />
         </SafeAreaView>
       </Modal>
+
+      <Modal visible={showPaywall} animationType="slide">
+        <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
+          <Paywall
+            onClose={handlePaywallClose}
+            onSuccess={handlePaywallSuccess}
+            priceString={priceString}
+            isLoading={isLoading}
+            purchase={purchase}
+            restore={restore}
+          />
+        </SafeAreaView>
+      </Modal>
+
       <StatusBar style="auto" />
     </SafeAreaView>
   );

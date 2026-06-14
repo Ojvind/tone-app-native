@@ -3,7 +3,7 @@ import { View, Text, Pressable, StyleSheet, ActivityIndicator } from 'react-nati
 import { useTheme } from '../theme';
 import { useTranslation } from '../i18n';
 
-const FEATURES = ['paywallFeature1', 'paywallFeature2', 'paywallFeature3'];
+const FEATURES = ['paywallFeature1', 'paywallFeature2', 'paywallFeature3', 'paywallFeature4'];
 
 export default function Paywall({ onClose, onSuccess, priceString, isLoading, purchase, restore }) {
   const colors = useTheme();
