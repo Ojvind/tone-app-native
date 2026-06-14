@@ -112,7 +112,7 @@ export default function App() {
           <View style={styles.titleRow}>
             <Text style={[styles.title, { color: colors.text }]}>{t.title}</Text>
             {!state.gameStarted && (
-              <Pressable onPress={handleStatsPress} style={styles.statsButton}>
+              <Pressable onPress={handleStatsPress} style={styles.statsButton} testID="stats-btn">
                 <StatsIcon color={colors.textMuted} />
               </Pressable>
             )}

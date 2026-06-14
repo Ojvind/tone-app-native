@@ -2,6 +2,8 @@ import { renderHook, act } from '@testing-library/react-native';
 import { useGame } from './useGame';
 import { TREBLE_NOTES, BASS_NOTES } from '../constants';
 
+jest.mock('../stats', () => ({ recordSession: jest.fn() }));
+
 describe('useGame', () => {
   it('starts with correct initial state', () => {
     const { result } = renderHook(() => useGame(5));
@@ -140,6 +142,43 @@ describe('useGame', () => {
     act(() => result.current.actions.checkAnswers());
 
     expect(result.current.state.score).toBe(8);
+  });
+
+  // Bug: beginner treble pool contains both c/4 and c/5, both named "C". pickUnique
+  // previously deduplicated by object reference, so both could appear in the same round,
+  // giving the player two visually different notes with the same correct answer.
+  it('generates notes with unique names within each clef', () => {
+    const { result } = renderHook(() => useGame(1));
+    for (let i = 0; i < 30; i++) {
+      act(() => result.current.actions.startGame());
+      const trebleNames = result.current.state.notes
+        .filter(n => n.clef === 'treble')
+        .map(n => n.name);
+      const bassNames = result.current.state.notes
+        .filter(n => n.clef === 'bass')
+        .map(n => n.name);
+      expect(new Set(trebleNames).size).toBe(trebleNames.length);
+      expect(new Set(bassNames).size).toBe(bassNames.length);
+    }
+  });
+
+  // Bug: handleNext used `totalRounds * 8` as the score denominator. If pickUnique ever
+  // returned fewer than 4 notes per clef (e.g. after shrinking a difficulty pool), the
+  // denominator would be inflated and a perfect score would show less than 100%.
+  it('passes actual notes played count as total to recordSession, not hardcoded totalRounds * 8', () => {
+    const { recordSession } = require('../stats');
+    recordSession.mockClear();
+    const { result } = renderHook(() => useGame(1));
+
+    act(() => result.current.actions.startGame());
+    const notesInRound = result.current.state.notes.length;
+
+    act(() => result.current.actions.checkAnswers());
+    act(() => result.current.actions.handleNext());
+
+    expect(recordSession).toHaveBeenCalledWith(
+      expect.objectContaining({ total: notesInRound }),
+    );
   });
 
   it('resetGame restores initial state', () => {
