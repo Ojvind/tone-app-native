@@ -35,7 +35,16 @@ function pickUnique(arr, count) {
     const j = Math.floor(Math.random() * (i + 1));
     [copy[i], copy[j]] = [copy[j], copy[i]];
   }
-  return copy.slice(0, count);
+  const seen = new Set();
+  const result = [];
+  for (const item of copy) {
+    if (!seen.has(item.name)) {
+      seen.add(item.name);
+      result.push(item);
+    }
+    if (result.length === count) break;
+  }
+  return result;
 }
 
 export function useGame(initialRounds = 5) {
@@ -96,7 +105,7 @@ export function useGame(initialRounds = 5) {
       setRound(prev => prev + 1);
       generateNotes();
     } else {
-      const total = totalRounds * 8;
+      const total = allNotesRef.current.length;
       recordSession({ score, total, notes: allNotesRef.current, results: allResultsRef.current });
       setGameOver(true);
     }

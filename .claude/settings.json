@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "skill=$(jq -r '.tool_input.skill // \"\"'); [ \"$skill\" = \"eas-publish\" ] || exit 0; npm test -- --watchAll=false 2>&1 || echo '{\"continue\": false, \"stopReason\": \"Tests must pass before publishing. Fix failing tests and try again.\"}'",
+            "timeout": 120,
+            "statusMessage": "Running tests before publishing..."
+          }
+        ]
+      }
+    ]
+  }
+}

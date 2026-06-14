@@ -2,6 +2,10 @@ import React from 'react';
 import { render, screen } from '@testing-library/react-native';
 import GameOver from '../GameOver';
 
+jest.mock('expo-localization', () => ({
+  getLocales: () => [{ languageCode: 'sv' }],
+}));
+
 // score / (totalRounds * 8) = percentage
 // totalRounds=1, total=8 notes
 const renderGameOver = (score, totalRounds = 1) =>

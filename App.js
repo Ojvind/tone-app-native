@@ -89,6 +89,15 @@ export default function App() {
     setShowPaywall(false);
   }
 
+  function handleStart() {
+    const requiresPremium = state.difficulty === 'intermediate' || state.difficulty === 'advanced';
+    if (requiresPremium && !isPremium) {
+      handlePremiumRequired(state.difficulty);
+      return;
+    }
+    actions.startGame();
+  }
+
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
       {!state.gameStarted && <ClefDecorations color={colors.text} />}
@@ -118,7 +127,7 @@ export default function App() {
               setDifficulty={actions.setDifficulty}
               isPremium={isPremium}
               onPremiumRequired={handlePremiumRequired}
-              onStart={actions.startGame}
+              onStart={handleStart}
             />
           )}
 
@@ -165,7 +174,7 @@ export default function App() {
 
       <Modal visible={showStats} animationType="slide">
         <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
-          <Stats onClose={() => setShowStats(false)} />
+          {isPremium && <Stats onClose={() => setShowStats(false)} />}
         </SafeAreaView>
       </Modal>
 
