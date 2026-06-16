@@ -6,11 +6,6 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "se.otterbjork.ojvind.gissanoter",
@@ -25,11 +20,15 @@
       },
       "package": "se.otterbjork.ojvind.gissanoter"
     },
-    "newArchEnabled": true,
     "plugins": [
       "expo-asset",
       "expo-localization",
-      "./plugins/withRevenueCatSwiftFix"
+      "./plugins/withRevenueCatSwiftFix",
+      ["expo-splash-screen", {
+        "image": "./assets/splash.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#ffffff"
+      }]
     ],
     "extra": {
       "eas": {
