@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  SafeAreaView,
   ScrollView,
   View,
   Text,
@@ -10,6 +9,7 @@ import {
   Platform,
   Modal,
 } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useGame } from './src/hooks/useGame';
 import { useTheme } from './src/theme';
@@ -99,6 +99,7 @@ export default function App() {
   }
 
   return (
+    <SafeAreaProvider>
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
       {!state.gameStarted && <ClefDecorations color={colors.text} />}
       <KeyboardAvoidingView
@@ -193,6 +194,7 @@ export default function App() {
 
       <StatusBar style="auto" />
     </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 
