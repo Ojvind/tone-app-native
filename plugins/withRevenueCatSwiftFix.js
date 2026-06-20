@@ -19,11 +19,11 @@ const PATCH = `
       modified = content
       # Single-line: "<indent>case .x: return anything" + same-indent }
       modified = modified.gsub(/(( +)case [^\\n]+: return [^\\n]+)\\n(\\2\\})/) do
-        "#{$1}\\n#{$2}@unknown default: fatalError(\\"Unhandled case\\")\\n#{$3}"
+        "#{$1}\\n#{$2}@unknown default: break\\n#{$3}"
       end
       # Multi-line: "<indent>case .x:" + "<deeper-indent>return anything" + same-indent }
       modified = modified.gsub(/(( +)case [^\\n]+:\\n +return [^\\n]+)\\n(\\2\\})/) do
-        "#{$1}\\n#{$2}@unknown default: fatalError(\\"Unhandled case\\")\\n#{$3}"
+        "#{$1}\\n#{$2}@unknown default: break\\n#{$3}"
       end
       if modified != content
         File.write(file, modified)
