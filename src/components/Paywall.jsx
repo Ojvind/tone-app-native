@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
   },
   closeBtn: {
     position: 'absolute',
-    top: 20,
+    top: 52,
     right: 24,
   },
   closeText: {
