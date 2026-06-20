@@ -23,7 +23,7 @@ import Stats from './src/components/Stats';
 import Paywall from './src/components/Paywall';
 import { initPurchases, usePremium } from './src/premium';
 
-try { initPurchases(); } catch { /* RevenueCat unavailable — app continues without premium */ }
+// try { initPurchases(); } catch { /* RevenueCat unavailable — app continues without premium */ }
 
 function StatsIcon({ color }) {
   const bars = [{ h: 8 }, { h: 18 }, { h: 13 }];
