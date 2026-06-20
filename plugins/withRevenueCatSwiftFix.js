@@ -10,13 +10,13 @@ const SWIFT5_PODS = ['RevenueCat', 'PurchasesHybridCommon', 'ExpoLocalization'];
 const PATCH = `
   # Force Swift 5 language mode for pods that don't compile cleanly under Swift 6.
   # Swift 5 treats missing @unknown default as a warning, not an error.
-  ${SWIFT5_PODS.map(p => `'${p}'`).join(', ')}.tap do |pod_names|
+  ['RevenueCat', 'PurchasesHybridCommon', 'ExpoLocalization'].each do |pod_name|
     installer.pods_project.targets.each do |target|
-      next unless pod_names.include?(target.name)
+      next unless target.name == pod_name
       target.build_configurations.each do |config|
         config.build_settings['SWIFT_VERSION'] = '5'
       end
-      puts "RC Swift fix: set SWIFT_VERSION=5 for #{target.name}"
+      puts "RC Swift fix: set SWIFT_VERSION=5 for #{pod_name}"
     end
   end
 
