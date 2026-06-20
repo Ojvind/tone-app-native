@@ -5,7 +5,7 @@ import Constants from 'expo-constants';
 
 // Get these from your RevenueCat dashboard → Project → API keys
 const API_KEY = Platform.OS === 'ios'
-  ? 'test_aPGPDxvLrRRMPWOdcmyaYorfFoH'
+  ? 'appl_CxvlOcZVDtpMYqHmwUXiblsfhZL'
   : 'goog_PASTE_YOUR_REVENUECAT_ANDROID_KEY_HERE';
 
 // Must match the entitlement identifier in RevenueCat dashboard
