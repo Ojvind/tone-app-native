@@ -2,7 +2,7 @@
   "expo": {
     "name": "Sheet Music Quiz",
     "slug": "tone-app-native",
-    "version": "1.8.1",
+    "version": "1.8.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
